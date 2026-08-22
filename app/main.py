@@ -1,6 +1,7 @@
 from fastapi import FastAPI, Depends, BackgroundTasks, HTTPException, WebSocket, WebSocketDisconnect
 from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy.orm import Session
+import os
 
 from . import models, schemas
 from .database import engine, get_db
@@ -11,9 +12,16 @@ models.Base.metadata.create_all(bind=engine)
 
 app = FastAPI(title="AccessAudit API")
 
+# CORS origins: localhost for local dev, plus your deployed frontend URL
+# (set via the FRONTEND_ORIGIN env var on Render)
+_extra_origins = os.getenv("FRONTEND_ORIGIN", "")
+allowed_origins = ["http://localhost:4200"] + (
+    [_extra_origins] if _extra_origins else []
+)
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:4200"],  # Angular dev server
+    allow_origins=allowed_origins,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
